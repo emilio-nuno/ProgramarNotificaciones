@@ -1,0 +1,1 @@
+Crear un archivo Python llamado config.py para almacenar información acerca de la conexión con la base de datos
