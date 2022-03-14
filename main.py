@@ -1,4 +1,6 @@
 import datetime
+import mysql.connector
+import config as cfg
 
 traducciones = {
     'Monday': 'L',
@@ -25,6 +27,8 @@ def consultar_usuarios(fecha_actual):
     pass
 
 def main():
+    cnx = mysql.connector.connect(**cfg.mysql)
+    cnx.close()
     """Esta función checará si existe alguna notificación que se tiene que mandar"""
     consultar_usuarios(datetime.datetime.now())
 
