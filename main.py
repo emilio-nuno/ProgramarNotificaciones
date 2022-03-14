@@ -1,9 +1,11 @@
 import datetime
 import mysql.connector
+from mysql.connector import errorcode
 import config as cfg
+import sys
 
 traducciones = {
-    'Monday': 'L',
+    'Monday': 'L',  
     'Tuesday': 'M',
     'Wednesday': 'I',
     'Thursday': 'J',
@@ -12,25 +14,34 @@ traducciones = {
     'Sunday': 'D',
 }
 
-datos_prueba = {
-    'L': {'5:00': [1,2],'4:00': [3,4], '8:00': [5,6]}
-}
-
-def consultar_usuarios(fecha_actual):
-    """Esta función nos permitirá consultar la base de datos de usuarios"""
-    dia = fecha_actual.strftime("%A")
+def consultar_notificaciones(fecha_actual, cnx):
+    """Esta función checará si existe alguna notificación que se tiene que mandar"""
+    
+    comando = ("SELECT codigo_usuario, nombre_programa FROM radiocucei.notificaciones WHERE horario = %s AND dia = %s")
+    cursor = cnx.cursor()
+    dia = traducciones[fecha_actual.strftime("%A")]
     hora = fecha_actual.hour
-    if traducciones[dia] in datos_prueba:
-        print(datos_prueba[traducciones[dia]])
-    else:
-        print("Nada programado para hoy")
-    pass
+    valores = (hora, dia)
+    cursor.execute(comando, valores)
+    for (codigo, nombre_programa) in cursor:
+        print(f'Mandar el programa {nombre_programa} al usuario {codigo}')
 
 def main():
-    cnx = mysql.connector.connect(**cfg.mysql)
+    try:
+        cnx = mysql.connector.connect(**cfg.mysql)
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("Something is wrong with your user name or password")
+            sys.exit(1)
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("Database does not exist")
+            sys.exit(1)
+        else:
+            print(err)
+            sys.exit(1)
+    consultar_notificaciones(datetime.datetime.now(), cnx)
     cnx.close()
-    """Esta función checará si existe alguna notificación que se tiene que mandar"""
-    consultar_usuarios(datetime.datetime.now())
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()
