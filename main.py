@@ -15,7 +15,7 @@ traducciones = {
     'Sunday': 'D',
 }
 
-def enviar_notificacion(codigo_usuario, nombre_programa, horario):
+def enviar_notificacion(codigo_usuario, nombre_programa):
     """Esta función se encargará de enviar la notificación al usuario"""
 
     url = "https://onesignal.com/api/v1/notifications"
@@ -26,18 +26,20 @@ def enviar_notificacion(codigo_usuario, nombre_programa, horario):
 	"headings": {"en": "Program Notification", "es": "Notificación de Programa"}
     }
     respuesta = requests.post(url, headers={"Content-Type": "application/json; charset=utf-8", "Authorization": "Basic YTQzM2RiOTQtYzUxYy00MTlmLWE3NTQtODhiYWJiYmFhYTBm"}, json=carga)
+    if(respuesta.status_code != 200):
+        print(f"Error al enviar notificación al usuario: {codigo_usuario}")
 
 def consultar_notificaciones(fecha_actual, cnx):
     """Esta función checará si existe alguna notificación que se tiene que mandar"""
     
-    comando = ("SELECT codigo_usuario, nombre_programa, horario FROM radiocucei.notificaciones WHERE horario = %s AND dia = %s")
+    comando = ("SELECT codigo_usuario, nombre_programa FROM radiocucei.notificaciones WHERE horario = %s AND dia = %s")
     cursor = cnx.cursor()
     dia = traducciones[fecha_actual.strftime("%A")]
     hora = (fecha_actual + datetime.timedelta(hours=1)).hour
     valores = (f"{'0' if hora < 10 else ''}{hora}:00", dia)
     cursor.execute(comando, valores)
-    for (codigo, nombre_programa, horario) in cursor:
-        enviar_notificacion(codigo, nombre_programa, horario)
+    for (codigo, nombre_programa) in cursor:
+        enviar_notificacion(codigo, nombre_programa)
 
 def main():
     try:
